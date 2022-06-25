@@ -1,0 +1,23 @@
+body {
+    background-color: #123;
+}
+
+table tr th {
+    border:1px solid white;
+    margin: 0;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+.void{
+    background-color: black;
+}
+.ground{
+    background-color: rgb(164, 144, 118);
+}
+.wall {
+    background-color: gray;
+}
+.door {
+    background-color: rgb(114, 67, 67);
+}
