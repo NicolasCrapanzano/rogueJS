@@ -1,49 +1,113 @@
 class Entity {
-    constructor(maxHp,currentHp,damage,attackSpeed,initialPosition) {
+    constructor(name="entity",x,y,maxHp,currentHp,damage=0,attackSpeed=0) {
+        this.name = name;
         this.maxHp = maxHp;
         this.currentHp = currentHp;
         this.damage = damage;
         this.attackSpeed = attackSpeed;
-        this.positionX = initialPosition[0];
-        this.positionY = initialPosition[1];
+        this.positionX = x;
+        this.positionY = y;
+
+        this.ready = false;
+        this.init();
     }
+
+    init(){
+        this.ready = true;
+    }
+    update(){
+
+    }
+    draw(){
+
+    }
+
     move(positionX = 0,positionY = 0){ //TILE based movement
         //check if it can move to desired pos
         //check if colliding with enemy, call attack
-        if(positionX !== 0){
-            console.log("Previous positionX: ",positionX);
-            this.positionX = this.positionX + positionX;
-            console.log("New positionX: ",this.positionX);
+        if(newX !== undefined){
+            this.positionX += newX;
         }
-        if(positionY !== 0){
-            console.log("Previous positionY: ",positionY);
-            this.positionY = this.positionY + positionY;
-            console.log("New positionY: ",this.positionY);
+        if(newY !== undefined){
+            this.positionY += newY;
         }
     }
+
+    changePosition(){
+        this.positionX = newX;
+        this.positionY = newY;
+    }
+
+    changeHealth(hp){
+        this.actualhp += hp;
+        
+        if(this.actualhp > this.maxHp){
+            this.actualhp = this.maxHp;
+        }
+        console.log(this.name, " HP has changed to: ",this.actualhp);
+        
+        if(this.actualhp <= 0){
+            console.log(this.name, " is dead.");
+        }
+    }
+
     attack(){
 
     }
+
     get position(){
         return [this.positionX,this.positionY];
     }
+
     get health(){
         return [this.currentHp,this.maxHp]
     }
-    set recieveDamage(damage){
-        this.currentHp = this.currentHp - damage;
-        if(this.currentHp <= 0){
-            console.log("you are dead");
-        }
+
+    getName(){
+        return this.name;
+    }
+
+    setName(newName){
+        console.log("name changed from: ",this.name," to: ",newName);
+        this.name = newName;
+    }
+
+    set maxHealth(hp){
+        this.maxHp = hp;
     }
 }
 
 class Player extends Entity {
+    constructor(name,x,y,maxhp,actualhp){
+        super(name,x,y,maxhp,actualhp);
+    }
 
+    init(){
+        window.addEventListener("keydown", event => this.getKey(event) );
+    }
+    getKey(event){
+        if(event.code === "KeyW"){
+            this.movePosition(0,1);
+            console.log("move forwards",this.getPosition());
+        }else if(event.code === "KeyS"){
+            this.movePosition(0,-1);
+            console.log("move backwards: ",this.getPosition())
+            
+        }
+
+        if(event.code === "KeyD"){
+            this.movePosition(1);
+            console.log("move right",this.getPosition())
+        }else if(event.code === "KeyA"){
+            this.movePosition(-1);
+            console.log("move left",this.getPosition());
+        }
+    }
 }
 
 class Map {
-    constructor(width,height){
+    constructor(width,height,mainObject){
+        this.mainObj = mainObject;
         this.width = width;
         this.height = height;
         this.mapSize = (this.width * this.height);
@@ -52,8 +116,13 @@ class Map {
         this.currentSecond = 0;
         this.frameCount = 0;
         this.framesLastSecond = 0;
+
+        console.log(this.mainObject);
     }
 
+    init(){
+
+    }
     generateMap(){
         for(let y = 0; y < this.height; y++){
             for(let x = 0; x < this.width; x++){
@@ -77,7 +146,7 @@ class Map {
             }
         }
         try{
-            this.buildHtmlTableMap();
+            //this.buildHtmlTableMap();
         }catch (err){
             console.error(err);
         }
@@ -141,7 +210,7 @@ class Map {
             tableMain.append(tableRow);
         }
     }
-    updateHtmlTableMap(){
+    Draw(){
         let tableMain;
         try{
             tableMain = document.getElementById("tableMain");
@@ -214,55 +283,35 @@ class Map {
     getMapContentOnPos(position){
         return this.mapContent[position];
     }
-    setMapContent(newContent,position){
-        this.mapContent[position] = newContent;
-    }
+
 }
 
 class Game{
     constructor(){
         this.player = undefined;
         this.map = undefined;
+        this.entities = [];
+    }
+
+    init(){
+
+    }
+
+    update(){
+        //let playerPos = this.player.position;
     }
 
     startGame(){
         this.player = new Entity(100,100,10,1,[0,0]);
-        this.map = new Map(30,20);
-        let playerPos = this.player.position;
-        window.addEventListener("keydown", event => this.keyInput(event) );
-
-        this.map.generateMap();
-        this.map.setMapContent(0,this.map.getMapCoordinates(playerPos[0],playerPos[1]));
-        if(this.player != undefined){
-            this.gameLoop();
-        }else{
-            console.log("something went wrong, and character wasn't created; player: ",this.player);
-        }
+        this.map = new Map(30,20,this);
     }
 
-    keyInput(event){
-        
-        if(event.code === "KeyW"){
-            console.log("move forwards");
-            this.player.move(0,1);
-        }else if(event.code === "KeyS"){
-            console.log("move backwards")
-            this.player.move(0,-1);
-        }
-
-        if(event.code === "KeyD"){
-            console.log("move right")
-            this.player.move(1);
-        }else if(event.code === "KeyA"){
-            console.log("move left");
-            this.player.move(-1);
-        }
+    get playerData(){
+        return this.player;
     }
-    gameLoop(){
-        
-        let playerPos = this.player.position;
-        //console.log(playerPos);
-        
+
+    get mapData(){
+        return this.map;
     }
 }
 
