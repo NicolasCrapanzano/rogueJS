@@ -64,6 +64,7 @@ class Player extends Entity{
 
     init(){
         window.addEventListener("keydown", event => this.getKey(event) );
+        console.log("player init");
     }
     getKey(event){
         if(event.code === "KeyW"){
