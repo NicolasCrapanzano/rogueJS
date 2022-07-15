@@ -21,16 +21,22 @@ class Entity {
     draw(){
 
     }
+    move(positionX = 0,positionY = 0){
+        let newCoords = this.calculateMovingCoords(positionX,positionY);
+        this.changePosition ( newCoords[0],newCoords[1] );
+    }
 
-    move(positionX = 0,positionY = 0){ //TILE based movement
+    calculateMovingCoords(positionX = 0,positionY = 0){ //TILE based movement
         //check if it can move to desired pos
         //check if colliding with enemy, call attack
+        let newCoords = [this.positionX,this.positionY];
         if(positionX !== undefined){
-            this.positionX += positionX;
+            newCoords[0] = this.positionX + positionX;
         }
         if(positionY !== undefined){
-            this.positionY += positionY;
+            newCoords[1] = this.positionY + positionY;
         }
+        return newCoords;
     }
 
     changePosition(newX=0,newY=0){
@@ -85,28 +91,9 @@ class Player extends Entity {
     }
 
     init(){
-        window.addEventListener("keyup", event => this.getKey(event) );
-
+        
     }
-    getKey(event){
 
-        if(event.code === "KeyW"){
-            this.move(0,-1);
-            
-        }else if(event.code === "KeyS"){
-            this.move(0,1);
-            
-            
-        }
-
-        if(event.code === "KeyD"){
-            this.move(1);
-            
-        }else if(event.code === "KeyA"){
-            this.move(-1);
-            
-        }
-    }
 }
 
 class GameMap {
@@ -172,7 +159,38 @@ class GameMap {
             5:this.entitiesList.sword,
             6:this.entitiesList.chestPlate
         };
-
+        this.blockList = {
+            "void":{
+                solid: true,
+                interactable: false,
+                id: 0,
+                className:"void",
+            },
+            "ground":{
+                solid: false,
+                interactable: false,
+                id: 1,
+                className:"ground",
+            },
+            "wall":{
+                solid: true,
+                interactable: false,
+                id: 2,
+                className:"wall",
+            },
+            "door":{
+                solid: true,
+                interactable: true,
+                id: 3,
+                className:"door",
+            }
+        }
+        this.blockListById = {
+            0: this.blockList.void,
+            1: this.blockList.ground,
+            2: this.blockList.wall,
+            3: this.blockList.door,
+        }
 
         this.init();
     }
@@ -242,51 +260,18 @@ class GameMap {
                 
 
                 //Display layout
-                switch (this.map[currentCoords]) {
-                    case 0:
-                        tableCell.classList.add("void");
-                        break;
-                    case 1:
-                        tableCell.classList.add("ground");
-                        break;
-                    case 2:
-                        tableCell.classList.add("wall");
-                        break;
-                    case 3:
-                        tableCell.classList.add("door");
-                        break;
-                    default:
-                        break;
-                }
+                if(currentCoords !== undefined) {
+                    tableCell.classList.add(this.blockListById[ this.map[currentCoords] ].className);
+                };
+
                 //Display entities 
                 // !!! having these in separated form is easier to read but not really practical, fix!
-                //items
-
                 if(currentContentID || currentContentID === 0) {
                     
                     tableCell.innerHTML = this.entitiesListById[ currentContentID ].sprite;
                     tableCell.style.color = this.entitiesListById[ currentContentID ].color;
                 };
-                //mobs
-                /*
-                switch (this.mapContent[this.getMapCoordinates(x,y)]) {
-                    case 0:
-                        tableCell.innerHTML = "P";
-                        tableCell.style.color = "blue";
-                        break;
-                    case 1:
-                        tableCell.innerHTML = "p";
-                        break;
-                    case 2:
-                        tableCell.innerHTML = "S";
-                        break;
-                    case 3:
-                        tableCell.innerHTML = "b";
-                        break;
-                    default:
-                        break;
-                }
-                */
+
                 tableRow.append(tableCell);
             }
             tableMain.append(tableRow);
@@ -330,22 +315,9 @@ class GameMap {
                 tableCell.innerHTML = "";
                 //Display layout
                 
-                switch (this.map[this.getMapCoordinates(x,y)]) {
-                    case 0:
-                        tableCell.classList.add("void");
-                        break;
-                    case 1:
-                        tableCell.classList.add("ground");
-                        break;
-                    case 2:
-                        tableCell.classList.add("wall");
-                        break;
-                    case 3:
-                        tableCell.classList.add("door");
-                        break;
-                    default:
-                        break;
-                }
+                if(currentCoords !== undefined) {
+                    tableCell.classList.add(this.blockListById[ this.map[currentCoords] ].className);
+                };
                 //Display items change to foreach method
                 if(currentContentID || currentContentID === 0) {
                     tableCell.innerHTML = this.entitiesListById[ currentContentID ].sprite;
@@ -368,6 +340,9 @@ class GameMap {
             }
         }
         
+    }
+    checkCollision(posX,posY){
+        return this.blockListById[ this.map[ this.getMapCoordinates(posX,posY) ] ].solid;
     }
     get getMapSize(){
         return (this.mapSize);
@@ -395,9 +370,43 @@ class Game{
     }
 
     init(){
+        window.addEventListener("keyup", event => this.getKey(event) );
         this.startGame();
     }
 
+    // this implementation has a lot of repeating code, check should be done on canPlayerMove();
+    getKey(event){
+        if(event.code === "KeyW"){
+            let nextCoords = this.player.calculateMovingCoords(0,-1);
+            
+            if(! this.canPlayerMove(nextCoords[0],nextCoords[1]) ){
+                this.player.move(0,-1);
+            }
+        }else if(event.code === "KeyS"){
+            let nextCoords = this.player.calculateMovingCoords(0,1);
+            
+            if(! this.canPlayerMove(nextCoords[0],nextCoords[1]) ){
+                this.player.move(0,1);
+            }
+        }
+
+        if(event.code === "KeyD"){
+            let nextCoords = this.player.calculateMovingCoords(1);
+            
+            if(! this.canPlayerMove(nextCoords[0],nextCoords[1]) ){
+                this.player.move(1);
+            }
+        }else if(event.code === "KeyA"){
+            let nextCoords = this.player.calculateMovingCoords(-1);
+            
+            if(! this.canPlayerMove(nextCoords[0],nextCoords[1]) ){
+                this.player.move(-1);
+            }
+        }
+    }
+    canPlayerMove(posX,posY){
+        return this.map.checkCollision(posX,posY);
+    }
     gameUpdate(){
         //let playerPos = this.player.position;
         this.map.Draw();
